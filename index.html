@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#173f38" />
+    <meta
+      name="description"
+      content="Küçük mağazalar için sade haftalık vardiya planlama aracı."
+    />
+    <title>Vardiya Planı</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="topbar">
+        <a class="brand" href="./" aria-label="Vardiya Planı ana sayfa">
+          <span class="brand-mark" aria-hidden="true">7</span>
+          <span>
+            <strong>Vardiya Planı</strong>
+            <small>Haftalık mağaza programı</small>
+          </span>
+        </a>
+        <span class="storage-badge"><i aria-hidden="true"></i> Bu cihazda kayıtlı</span>
+      </header>
+
+      <main>
+        <section class="intro">
+          <div>
+            <p class="eyebrow">HAFTALIK PLANLAMA</p>
+            <h1>Haftayı tek bakışta planla.</h1>
+            <p class="intro-copy">
+              Personelleri ve izin günlerini belirle; dengeli çalışma planını saniyeler içinde oluştur.
+            </p>
+          </div>
+
+          <nav class="week-switcher" aria-label="Hafta seçimi">
+            <button id="previousWeek" class="icon-button" type="button" aria-label="Önceki hafta">‹</button>
+            <button id="currentWeek" class="week-label" type="button" aria-label="Bu haftaya dön">
+              <span id="weekRange">—</span>
+              <small id="weekYear">—</small>
+            </button>
+            <button id="nextWeek" class="icon-button" type="button" aria-label="Sonraki hafta">›</button>
+          </nav>
+        </section>
+
+        <div class="workspace">
+          <aside class="panel settings-panel" aria-labelledby="settingsTitle">
+            <div class="panel-heading">
+              <div>
+                <p class="panel-kicker">AYARLAR</p>
+                <h2 id="settingsTitle">Personel ve izinler</h2>
+              </div>
+              <button id="resetSettings" class="text-button" type="button">Sıfırla</button>
+            </div>
+
+            <p class="helper-text">
+              İsimleri, çalışılabilecek vardiyaları ve haftalık izin gününü seçin.
+            </p>
+
+            <div class="shift-heading" aria-hidden="true">
+              <span>Personel</span>
+              <span>Çalışabilir</span>
+              <span>İzin</span>
+            </div>
+            <div id="employeeSettings" class="employee-settings"></div>
+
+            <div class="shift-times">
+              <p><span class="time-dot morning-dot"></span><strong>Sabah</strong><span>08:45–17:00</span></p>
+              <p><span class="time-dot afternoon-dot"></span><strong>Öğlen</strong><span>14:00–21:15</span></p>
+              <p><span class="time-dot full-dot"></span><strong>Full</strong><span>08:45–21:15</span></p>
+            </div>
+
+            <button id="generateSchedule" class="primary-button" type="button">
+              <span>Planı oluştur</span>
+              <span aria-hidden="true">→</span>
+            </button>
+          </aside>
+
+          <section class="panel schedule-panel" aria-labelledby="scheduleTitle">
+            <div class="panel-heading schedule-heading">
+              <div>
+                <p class="panel-kicker">TÜM HAFTA</p>
+                <h2 id="scheduleTitle">Çalışma planı</h2>
+              </div>
+              <button id="clearSchedule" class="text-button danger-text" type="button" hidden>Planı sil</button>
+            </div>
+
+            <div id="issues" class="issues" aria-live="polite"></div>
+            <div id="scheduleContent"></div>
+          </section>
+        </div>
+
+        <section class="rules-strip" aria-label="Planlama kuralları">
+          <div>
+            <span class="rule-number">2</span>
+            <p><strong>Açılış ve kapanış</strong><small>En az iki personel</small></p>
+          </div>
+          <div>
+            <span class="rule-number">45</span>
+            <p><strong>Haftalık hedef</strong><small>Kişi başı yaklaşık saat</small></p>
+          </div>
+          <div>
+            <span class="rule-number">1</span>
+            <p><strong>Haftalık izin</strong><small>Her personel için bir gün</small></p>
+          </div>
+        </section>
+      </main>
+
+      <footer>
+        <p>Vardiya Planı</p>
+        <p>Veriler yalnızca bu tarayıcıda saklanır.</p>
+      </footer>
+    </div>
+
+    <dialog id="shiftDialog" class="shift-dialog" aria-labelledby="dialogTitle">
+      <div class="dialog-heading">
+        <div>
+          <p class="panel-kicker">VARDİYA DÜZENLE</p>
+          <h2 id="dialogTitle">Vardiya seç</h2>
+          <p id="dialogSubtitle" class="helper-text"></p>
+        </div>
+        <button id="closeDialog" class="dialog-close" type="button" aria-label="Pencereyi kapat">×</button>
+      </div>
+      <div id="shiftOptions" class="shift-options"></div>
+    </dialog>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script src="./app.js" defer></script>
+  </body>
+</html>
