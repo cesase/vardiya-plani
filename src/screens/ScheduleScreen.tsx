@@ -33,6 +33,15 @@ interface EditingCell {
   employee: Employee;
 }
 
+type ScheduleView = 'day' | 'week';
+
+const WEEK_SHIFT_LABELS: Record<ShiftId, string> = {
+  morning: 'S',
+  afternoon: 'Ö',
+  full: 'F',
+  off: 'İ',
+};
+
 export function ScheduleScreen({
   weekStart,
   onChangeWeek,
@@ -47,6 +56,7 @@ export function ScheduleScreen({
   const dates = useMemo(() => getWeekDates(weekStart), [weekStart]);
   const [selectedDate, setSelectedDate] = useState(dates[0]);
   const [editingCell, setEditingCell] = useState<EditingCell | null>(null);
+  const [scheduleView, setScheduleView] = useState<ScheduleView>('day');
   const stats = useMemo(
     () => getAllWeekStats(schedule, employees, shifts),
     [schedule, employees, shifts],
@@ -63,24 +73,47 @@ export function ScheduleScreen({
     <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
       <WeekNavigator weekStart={weekStart} onChange={onChangeWeek} />
 
-      <View style={styles.dayStrip}>
-        {dates.map((date) => {
-          const selected = date === selectedDate;
-          return (
-            <Pressable
-              key={date}
-              onPress={() => setSelectedDate(date)}
-              style={[styles.dayButton, selected && styles.dayButtonSelected]}
-            >
-              <Text style={[styles.dayShort, selected && styles.dayTextSelected]}>{formatDayShort(date)}</Text>
-              <Text style={[styles.dayNumber, selected && styles.dayTextSelected]}>
-                {Number(date.slice(-2))}
-              </Text>
-              {schedule && <View style={[styles.dayDot, selected && styles.dayDotSelected]} />}
-            </Pressable>
-          );
-        })}
-      </View>
+      {schedule && (
+        <View style={styles.viewToggle}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ selected: scheduleView === 'day' }}
+            onPress={() => setScheduleView('day')}
+            style={[styles.viewToggleButton, scheduleView === 'day' && styles.viewToggleButtonSelected]}
+          >
+            <Text style={[styles.viewToggleText, scheduleView === 'day' && styles.viewToggleTextSelected]}>Gün</Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ selected: scheduleView === 'week' }}
+            onPress={() => setScheduleView('week')}
+            style={[styles.viewToggleButton, scheduleView === 'week' && styles.viewToggleButtonSelected]}
+          >
+            <Text style={[styles.viewToggleText, scheduleView === 'week' && styles.viewToggleTextSelected]}>Tüm hafta</Text>
+          </Pressable>
+        </View>
+      )}
+
+      {(!schedule || scheduleView === 'day') && (
+        <View style={styles.dayStrip}>
+          {dates.map((date) => {
+            const selected = date === selectedDate;
+            return (
+              <Pressable
+                key={date}
+                onPress={() => setSelectedDate(date)}
+                style={[styles.dayButton, selected && styles.dayButtonSelected]}
+              >
+                <Text style={[styles.dayShort, selected && styles.dayTextSelected]}>{formatDayShort(date)}</Text>
+                <Text style={[styles.dayNumber, selected && styles.dayTextSelected]}>
+                  {Number(date.slice(-2))}
+                </Text>
+                {schedule && <View style={[styles.dayDot, selected && styles.dayDotSelected]} />}
+              </Pressable>
+            );
+          })}
+        </View>
+      )}
 
       {!schedule ? (
         <View style={styles.emptyCard}>
@@ -107,45 +140,115 @@ export function ScheduleScreen({
             </View>
           )}
 
-          <View style={styles.card}>
-            <View style={styles.sectionHeading}>
-              <View>
-                <Text style={styles.eyebrow}>{formatDayLong(selectedDate)}</Text>
-                <Text style={styles.sectionTitle}>{formatDayMonth(selectedDate)}</Text>
-              </View>
-              <Text style={styles.tapHint}>Değiştirmek için dokun</Text>
-            </View>
-
-            {employees.map((employee, index) => {
-              const shiftId = schedule.assignments[selectedDate]?.[employee.id] ?? 'off';
-              const shift = shiftId === 'off' ? undefined : shiftById[shiftId];
-              const palette = SHIFT_COLORS[shiftId];
-              return (
-                <View key={employee.id} style={[styles.employeeRow, index > 0 && styles.employeeBorder]}>
-                  <View style={styles.personBlock}>
-                    <View style={styles.avatar}>
-                      <Text style={styles.avatarText}>{employee.name.trim().charAt(0).toLocaleUpperCase('tr-TR')}</Text>
-                    </View>
-                    <View>
-                      <Text style={styles.personName}>{employee.name}</Text>
-                      <Text style={styles.personTime}>
-                        {shift ? `${shift.start}–${shift.end}` : 'Çalışma yok'}
-                      </Text>
-                    </View>
-                  </View>
-                  <Pressable
-                    onPress={() => setEditingCell({ date: selectedDate, employee })}
-                    style={[styles.shiftPill, { backgroundColor: palette.background }]}
-                  >
-                    <View style={[styles.shiftDot, { backgroundColor: palette.accent }]} />
-                    <Text style={[styles.shiftText, { color: palette.text }]}>
-                      {shift?.label ?? OFF_LABEL}
-                    </Text>
-                  </Pressable>
+          {scheduleView === 'day' ? (
+            <View style={styles.card}>
+              <View style={styles.sectionHeading}>
+                <View>
+                  <Text style={styles.eyebrow}>{formatDayLong(selectedDate)}</Text>
+                  <Text style={styles.sectionTitle}>{formatDayMonth(selectedDate)}</Text>
                 </View>
-              );
-            })}
-          </View>
+                <Text style={styles.tapHint}>Değiştirmek için dokun</Text>
+              </View>
+
+              {employees.map((employee, index) => {
+                const shiftId = schedule.assignments[selectedDate]?.[employee.id] ?? 'off';
+                const shift = shiftId === 'off' ? undefined : shiftById[shiftId];
+                const palette = SHIFT_COLORS[shiftId];
+                return (
+                  <View key={employee.id} style={[styles.employeeRow, index > 0 && styles.employeeBorder]}>
+                    <View style={styles.personBlock}>
+                      <View style={styles.avatar}>
+                        <Text style={styles.avatarText}>{employee.name.trim().charAt(0).toLocaleUpperCase('tr-TR')}</Text>
+                      </View>
+                      <View>
+                        <Text style={styles.personName}>{employee.name}</Text>
+                        <Text style={styles.personTime}>
+                          {shift ? `${shift.start}–${shift.end}` : 'Çalışma yok'}
+                        </Text>
+                      </View>
+                    </View>
+                    <Pressable
+                      onPress={() => setEditingCell({ date: selectedDate, employee })}
+                      style={[styles.shiftPill, { backgroundColor: palette.background }]}
+                    >
+                      <View style={[styles.shiftDot, { backgroundColor: palette.accent }]} />
+                      <Text style={[styles.shiftText, { color: palette.text }]}>
+                        {shift?.label ?? OFF_LABEL}
+                      </Text>
+                    </Pressable>
+                  </View>
+                );
+              })}
+            </View>
+          ) : (
+            <View style={[styles.card, styles.weekCard]}>
+              <View style={styles.sectionHeading}>
+                <View>
+                  <Text style={styles.eyebrow}>Haftanın tamamı</Text>
+                  <Text style={styles.sectionTitle}>
+                    {formatDayMonth(dates[0])} – {formatDayMonth(dates[6])}
+                  </Text>
+                </View>
+                <Text style={styles.tapHint}>Hücreye dokun</Text>
+              </View>
+
+              <View style={styles.weekHeaderRow}>
+                <View style={styles.weekNameCell}>
+                  <Text style={styles.weekHeaderText}>Personel</Text>
+                </View>
+                {dates.map((date) => (
+                  <View key={date} style={styles.weekDayHeader}>
+                    <Text adjustsFontSizeToFit numberOfLines={1} style={styles.weekHeaderText}>
+                      {formatDayShort(date)}
+                    </Text>
+                    <Text style={styles.weekDayNumber}>{Number(date.slice(-2))}</Text>
+                  </View>
+                ))}
+              </View>
+
+              {employees.map((employee, index) => (
+                <View key={employee.id} style={[styles.weekRow, index > 0 && styles.employeeBorder]}>
+                  <View style={styles.weekNameCell}>
+                    <Text adjustsFontSizeToFit numberOfLines={1} style={styles.weekPersonName}>
+                      {employee.name}
+                    </Text>
+                  </View>
+                  {dates.map((date) => {
+                    const shiftId = schedule.assignments[date]?.[employee.id] ?? 'off';
+                    const shift = shiftId === 'off' ? undefined : shiftById[shiftId];
+                    const palette = SHIFT_COLORS[shiftId];
+                    return (
+                      <Pressable
+                        accessibilityLabel={`${employee.name}, ${formatDayLong(date)}: ${shift?.label ?? OFF_LABEL}`}
+                        key={date}
+                        onPress={() => setEditingCell({ date, employee })}
+                        style={[styles.weekShiftCell, { backgroundColor: palette.background, borderColor: palette.accent }]}
+                      >
+                        <Text style={[styles.weekShiftText, { color: palette.text }]}>
+                          {WEEK_SHIFT_LABELS[shiftId]}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              ))}
+
+              <View style={styles.weekLegend}>
+                {SHIFT_IDS.map((shiftId) => {
+                  const shift = shiftId === 'off' ? undefined : shiftById[shiftId];
+                  const palette = SHIFT_COLORS[shiftId];
+                  return (
+                    <View key={shiftId} style={styles.weekLegendItem}>
+                      <View style={[styles.weekLegendBadge, { backgroundColor: palette.background }]}>
+                        <Text style={[styles.weekLegendLetter, { color: palette.text }]}>{WEEK_SHIFT_LABELS[shiftId]}</Text>
+                      </View>
+                      <Text style={styles.weekLegendText}>{shift?.label ?? OFF_LABEL}</Text>
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
+          )}
 
           <PrimaryButton label="Planı yeniden oluştur" variant="secondary" onPress={onGenerate} />
 
@@ -217,6 +320,11 @@ export function ScheduleScreen({
 
 const styles = StyleSheet.create({
   content: { padding: 18, paddingBottom: 120, gap: 16 },
+  viewToggle: { flexDirection: 'row', backgroundColor: colors.surfaceMuted, borderRadius: radius.medium, padding: 4 },
+  viewToggleButton: { flex: 1, minHeight: 38, alignItems: 'center', justifyContent: 'center', borderRadius: radius.small },
+  viewToggleButtonSelected: { backgroundColor: colors.surface },
+  viewToggleText: { color: colors.textMuted, fontSize: 13, fontWeight: '800' },
+  viewToggleTextSelected: { color: colors.primary },
   dayStrip: { flexDirection: 'row', gap: 5, marginTop: 2 },
   dayButton: { flex: 1, minWidth: 38, paddingVertical: 9, alignItems: 'center', borderRadius: radius.medium },
   dayButtonSelected: { backgroundColor: colors.primary },
@@ -240,6 +348,21 @@ const styles = StyleSheet.create({
   emptyText: { color: colors.textMuted, fontSize: 14, lineHeight: 21, textAlign: 'center', marginTop: 8 },
   fullButton: { alignSelf: 'stretch', marginTop: 20 },
   card: { backgroundColor: colors.surface, borderRadius: radius.large, borderWidth: 1, borderColor: colors.border, padding: 17 },
+  weekCard: { paddingHorizontal: 10 },
+  weekHeaderRow: { minHeight: 42, flexDirection: 'row', alignItems: 'center', gap: 3, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
+  weekNameCell: { width: 62, paddingRight: 3 },
+  weekDayHeader: { flex: 1, minWidth: 0, alignItems: 'center' },
+  weekHeaderText: { color: colors.textMuted, fontSize: 9, fontWeight: '800' },
+  weekDayNumber: { color: colors.text, fontSize: 11, fontWeight: '900', marginTop: 2 },
+  weekRow: { minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 3 },
+  weekPersonName: { color: colors.text, fontSize: 12, fontWeight: '800' },
+  weekShiftCell: { flex: 1, minWidth: 0, height: 32, borderRadius: 7, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  weekShiftText: { fontSize: 11, fontWeight: '900' },
+  weekLegend: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, paddingTop: 12, marginTop: 2, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border },
+  weekLegendItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  weekLegendBadge: { width: 20, height: 20, borderRadius: 6, alignItems: 'center', justifyContent: 'center' },
+  weekLegendLetter: { fontSize: 9, fontWeight: '900' },
+  weekLegendText: { color: colors.textMuted, fontSize: 10, fontWeight: '700' },
   sectionHeading: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 10 },
   eyebrow: { color: colors.primary, fontSize: 12, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 },
   sectionTitle: { color: colors.text, fontSize: 19, fontWeight: '800', marginTop: 2 },
